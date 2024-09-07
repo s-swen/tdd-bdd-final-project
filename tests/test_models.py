@@ -27,7 +27,7 @@ import os
 import logging
 import unittest
 from decimal import Decimal
-from service.models import Product, Category, db
+from service.models import Product, Category, db, DataValidationError
 from service import app
 from tests.factories import ProductFactory
 
@@ -167,10 +167,58 @@ class TestProductModel(unittest.TestCase):
         for product in founds:
             self.assertEqual(product.name, name)
 
+    def test_find_a_product_by_availability(self):
+        """It should return the product by availability"""
+        products = ProductFactory.create_batch(10)
+        for product in products:
+            product.create()
+        count = sum(1 for product in products if product.available)
+        founds = Product.find_by_availability()
+        self.assertEqual(count, founds.count())
+        for product in founds:
+            self.assertEqual(product.available, True)
 
+    def test_raise_data_validate_error(self):
+        """It should raise dataValidationError with None id"""
+        product = ProductFactory()
+        product.create()
+        product.id = None
+        with self.assertRaises(DataValidationError):
+            product.update()
 
-        
+    def test_deserialize_with_invalid_available_type(self):
+        """It should raise a DataValidationError if 'available' is not a boolean"""
+        product = ProductFactory()
+        data = product.serialize()
+        data['available'] = 'y'
+        with self.assertRaises(DataValidationError):
+            product.deserialize(data)
 
+    def test_deserialize_with_invalid_attribute_type(self):
+        """It should raise a DataValidationError if category is not correct"""
+        product = ProductFactory()
+        data = product.serialize()
+        data['category'] = 'object'
+        with self.assertRaises(DataValidationError):
+            product.deserialize(data)
 
+    def test_deserialize_with_bad_or_no_data(self):
+        """It should raise a DataValidationError with bad or no data"""
+        product = ProductFactory()
+        data = product.serialize()
+        data['category'] = 123
+        with self.assertRaises(DataValidationError):
+            product.deserialize(data)
 
-
+    def test_find_by_price(self):
+        """It should find product by price"""
+        products = ProductFactory.create_batch(10)
+        for product in products:
+            product.create()
+        price = products[0].price
+        count = sum(1 for product in products if product.price == price)
+        founds = Product.find_by_price(price)
+        self.assertEqual(count, founds.count())
+        for product in founds:
+            self.assertEqual(product.price, price)
+    
