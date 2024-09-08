@@ -189,6 +189,29 @@ class TestProductRoutes(TestCase):
         updated_response = self.client.put(f"{BASE_URL}/{product.id}", json=data)
         self.assertEqual(updated_response.status_code, status.HTTP_200_OK)
         self.assertEqual(updated_response.get_json()['description'], updated_description)
+    
+    def test_delete_product(self):
+        """It should delete a product"""
+        product = self._create_products()[0]
+        product_id = product.id
+        response = self.client.delete(f"{BASE_URL}/{product_id}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertIsNone(Product.find(product_id))
+
+    def test_list_all_products(self):
+        """It should return all products"""
+        products = self._create_products(10)
+        response = self.client.get(f"{BASE_URL}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        products_array = response.get_json()
+        self.assertEqual(10, len(products_array))
+        for data in products_array:
+            product_id = data["id"]
+            self.assertEqual(data["name"], Product.find(product_id).name)
+            self.assertEqual(data["description"], Product.find(product_id).description)
+            self.assertEqual(Decimal(data["price"]), Product.find(product_id).price)
+            self.assertEqual(data["available"], Product.find(product_id).available)
+            self.assertEqual(data["category"], Product.find(product_id).category.name)
 
     ######################################################################
     # Utility functions
