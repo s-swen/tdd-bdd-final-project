@@ -166,6 +166,29 @@ class TestProductRoutes(TestCase):
     #
     # ADD YOUR TEST CASES HERE
     #
+    def test_get_product(self):
+        """It should return the test product using get"""
+        product = self._create_products()[0]
+        id = product.id
+        response = self.client.get(f"{BASE_URL}/{id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        new_product = response.get_json()
+        self.assertEqual(new_product["name"], product.name)
+        self.assertEqual(new_product["description"], product.description)
+        self.assertEqual(Decimal(new_product["price"]), product.price)
+        self.assertEqual(new_product["available"], product.available)
+        self.assertEqual(new_product["category"], product.category.name)
+
+    def test_update_product(self):
+        """It should update product"""
+        product = self._create_products()[0]
+        response = self.client.get(f"{BASE_URL}/{product.id}")
+        data = response.get_json()
+        updated_description = "updated description"
+        data['description'] = updated_description
+        updated_response = self.client.put(f"{BASE_URL}/{product.id}", json=data)
+        self.assertEqual(updated_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(updated_response.get_json()['description'], updated_description)
 
     ######################################################################
     # Utility functions
