@@ -95,24 +95,24 @@ def create_products():
 
 
 ######################################################################
-# L I S T   A L L   P R O D U C T S
-######################################################################
+# # L I S T   A L L   P R O D U C T S
+# ######################################################################
 
-#
-# PLACE YOUR CODE TO LIST ALL PRODUCTS HERE
-#
-@app.route("/products", methods=["GET"])
-def list_all_products():
-    """
-    This endpoint will list all products
-    """
-    app.logger.info("Request to list all products...")
-    products_array = []
-    products = Product.all()
-    for product in products:
-        products_array.append(product.serialize())
+# #
+# # PLACE YOUR CODE TO LIST ALL PRODUCTS HERE
+# #
+# @app.route("/products", methods=["GET"])
+# def list_all_products():
+#     """
+#     This endpoint will list all products
+#     """
+#     app.logger.info("Request to list all products...")
+#     products_array = []
+#     products = Product.all()
+#     for product in products:
+#         products_array.append(product.serialize())
 
-    return products_array, status.HTTP_200_OK
+#     return products_array, status.HTTP_200_OK
 
 
 ######################################################################
@@ -161,4 +161,24 @@ def delete_product(id):
     if not product:
         abort(status.HTTP_404_NOT_FOUND, f"Product '{id}' not found.")
     product.delete()
-    return {}, status.HTTP_204_NO_CONTENT
+    return "", status.HTTP_204_NO_CONTENT
+
+######################################################################
+# LIST PRODUCTS
+######################################################################
+@app.route("/products", methods=["GET"])
+def list_products():
+    """Return a list of products"""
+    app.logger.info("Request to list products...")
+    products = []
+    name = request.args.get("name")
+    if name:
+        app.logger.info("Find by name: %s", name)
+        products = Product.find_by_name(name)
+    else:
+        app.logger.info("Find all")
+        products = Product.all()
+
+    results = [product.serialize() for product in products]
+    app.logger.info("[%s] products returned", len(results))
+    return results, status.HTTP_200_OK
